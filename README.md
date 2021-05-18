@@ -8,4 +8,4 @@ Learning content from [Introduction to Computational Thinking](https://computati
 
 ## Two Class Distributions
 
-An [interactive tool](https://hub-binder.mybinder.ovh/user/fonsp-pluto-on-binder-2um5dzoe/pluto/edit?id=5a4a6d1a-b810-11eb-14ab-99f13ab20b22&token=doo0k2EfTo6cOoZM2O_l6Q#) for visualizing classification.
+An [interactive tool](https://binder.plutojl.org/v0.14.5/open?url=https%253A%252F%252Fraw.githubusercontent.com%252FBscout2011%252Fjulia_adventures%252Fmain%252Fdistributions.jl) for visualizing classification.
