@@ -102,12 +102,12 @@ md"""
 	
 This is a "scrubbable matrix" -- click on the number and drag to change.	
 	
-μ 🐮 = ``(``	
+🔵 μ 🐮 = ``(``	
  $(@bind a Scrubbable( μ_range; default=1.0))
  $(@bind b Scrubbable( μ_range; default=1.0))
 ``)``
 
-μ 🐑 = 
+🔴 μ 🐑 = 
 ``(``
 $(@bind c Scrubbable(μ_range; default=4.0 ))
 $(@bind d Scrubbable(μ_range; default=4.0))
@@ -127,9 +127,9 @@ $(@bind d Scrubbable(μ_range; default=4.0))
 	
 Prior = $(@bind prior Slider(prior_range; default=.5, show_value=true))
 
-Num Samples (Order) = $(@bind n_order Slider(n_range, show_value=true))
+Num Samples = $(@bind n_order Slider(n_range, show_value=false))
 	
-New Sample = ``(``	
+New Sample ⭐ Location = ``(``	
  $(@bind s_x Scrubbable( μ_range; default=2.5))
  $(@bind s_y Scrubbable( μ_range; default=2.5))
 ``)``
@@ -196,26 +196,26 @@ begin
 	log_proba = discriminant(new_sample, μ₁, Σ₁, prior=prior₁) - discriminant(new_sample, μ₂, Σ₂, prior=prior₂)
 	
 	Plots.contour(grid, grid, z₁, levels=3, color="blue", 
-		xlabel="weight", ylabel="fluffiness", label="🐮", legend=false)
+		xlabel="weight", ylabel="fluffiness", label="🐮", legend=false, aspect_ratio=:equal, xlim=(-2, 10), ylim=(-2,10))
 	Plots.contour!(grid, grid, z₂, levels=3, color="red", label="🐑", legend=true)
 	# contour!(grid, grid, g)
 	plot!(xs, ys, color="black", label="Discriminant")
-	scatter!([s_x], [s_y], label="Sample")
-	annotate!(μ₁[1], μ₁[2], text("🐮"))
-	annotate!(μ₂[1], μ₂[2], text("🐑"))
+	scatter!([s_x], [s_y], label="Sample", markershape=:star, markersize=12, markerstrokewidth=1)
+	# annotate!(μ₁[1], μ₁[2], text("🐮"))
+	# annotate!(μ₂[1], μ₂[2], text("🐑"))
 	scatter!(dA[1,:], dA[2,:], color="blue", alpha=0.5, legend=false)
-	scatter!(dB[1,:], dB[2,:], color="red", alpha=0.5, legend=false)
+	scatter!(dB[1,:], dB[2,:], color="red", alpha=0.5)
 end
 
 # ╔═╡ 86acff24-c5cb-42f4-a1af-8da80d64f2b6
 md"""
-Sample classified as $(log_proba > 0 ? "🐮" : "🐑"). Log Prob: $(log_proba).
+Sample classified as $(log_proba > 0 ? "🐮" : "🐑"). Log Prob: $(@sprintf("%.2f", log_proba)).
 
-🐮 classification error: $(@sprintf("%.3f", 1-mean(classify_A)))
+🐮 classification error: $(@sprintf("%.2f", (1-mean(classify_A))*100))%
 
-🐑 classification error: $(@sprintf("%.3f", 1-mean(classify_B)))
+🐑 classification error: $(@sprintf("%.2f", (1-mean(classify_B))*100))%
 
-Total Classification Error: $(@sprintf("%.3f", 1-mean(vcat(classify_A, classify_B))))
+Total Classification Error: $(@sprintf("%.2f", (1-mean(vcat(classify_A, classify_B)))*100))%
 """
 
 # ╔═╡ 7ff8bc65-0864-4453-97de-6c88eefac295
