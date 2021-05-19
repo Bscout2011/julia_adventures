@@ -31,6 +31,7 @@ begin
 	using Distributions
 	using Plots
 	using Contour
+	using Printf
 end
 
 # ╔═╡ 1eaa8b93-584b-4ea3-b1f9-40919eac516a
@@ -80,7 +81,7 @@ g_i (x) =  -.5 (x - \mu)^T \Sigma^{-1} (x - \mu) - .5 \ln | \Sigma | + \ln P({\o
 
 where $g_i, \mu, \Sigma$ are respective for each class type (🐮, 🐑). 
 
-Below, the interactive scrubbers allow you to change the distribution parameters and see how each of the terms affect the classification. Try out three special cases.
+Below, the interactive scrubbers allow you to change the distribution parameters and see how each of the terms affect the classification. The sampled distributions have a ratio of 30% for 🐮 and 70% for 🐑. Try out three special cases.
 
 **Case 1**: \$\Sigma 🐮 \, = \Sigma 🐑 = \sigma I$: A euclidean classifier. Class distributions are spherical. Linear decision boundary. Prior scales boundary between class means.
 
@@ -95,7 +96,10 @@ let
 σ_range = 0.1:.1:5
 cov_range = 0:.1:5
 prior_range = 0.01:.1:.99
+n_range = 1:5:100
 md"""
+## Input
+	
 This is a "scrubbable matrix" -- click on the number and drag to change.	
 	
 μ 🐮 = ``(``	
@@ -122,8 +126,10 @@ $(@bind d Scrubbable(μ_range; default=4.0))
 ``)``
 	
 Prior = $(@bind prior Slider(prior_range; default=.5, show_value=true))
+
+Num Samples (Order) = $(@bind n_order Slider(n_range, show_value=true))
 	
-Sample = ``(``	
+New Sample = ``(``	
  $(@bind s_x Scrubbable( μ_range; default=2.5))
  $(@bind s_y Scrubbable( μ_range; default=2.5))
 ``)``
@@ -141,15 +147,14 @@ function discriminant(x::AbstractVector, μ::AbstractVector, Σ::AbstractMatrix;
 	
 	g = transpose(x) * W * x + transpose(w)*x + w₀
 	g
-end
+end;
 
 # ╔═╡ d93ac03a-278d-4f70-a39c-6291e230073e
 # Generate data
 begin
-	# discriminant(x; μ=[0., 0.], Σ=[1. 0.; 0. 1.], prior=.5) = -.5 * transpose(x - μ) * Σ₁^-1 * (x - μ) - .5 * log(det(Σ)) + log(prior)
 	
-	n₁ = 3000 
-	n₂ = 7000
+	n₁ = 3 * n_order
+	n₂ = 7 * n_order
 	prior₁=prior
 	prior₂=1 - prior
 
@@ -172,7 +177,8 @@ begin
 	dist₂ = MvNormal(μ₂, Σ₂)
 	dA = rand(dist₁, n₁)
 	dB = rand(dist₂, n₂)
-	
+	classify_A = [(discriminant(x, μ₁, Σ₁, prior=prior₁) - discriminant(x, μ₂, Σ₂, prior=prior₂)) > 0 for x in eachcol(dA)]
+	classify_B = [(discriminant(x, μ₁, Σ₁, prior=prior₁) - discriminant(x, μ₂, Σ₂, prior=prior₂)) < 0 for x in eachcol(dB)]
 	
 	grid = -2:.1:10
 	z₁=[pdf(dist₁, [x, y]) for y in grid, x in grid]
@@ -188,23 +194,28 @@ begin
 	ys, xs = coordinates(g_contour[1])
 	new_sample = [s_x, s_y]
 	log_proba = discriminant(new_sample, μ₁, Σ₁, prior=prior₁) - discriminant(new_sample, μ₂, Σ₂, prior=prior₂)
-	# scatter(dA[1,:], dA[2,:], 
-	# 	alpha=0.1, 
-	# 	xlabel="x₁", xlims=(-2, 10),
-	# 	ylabel="x₂", ylims=(-2, 10),
-	# 	label="ω₁")
-	# scatter!(dB[1,:], dB[2,:], alpha=0.1, label="ω₂")
+	
 	Plots.contour(grid, grid, z₁, levels=3, color="blue", 
 		xlabel="weight", ylabel="fluffiness", label="🐮", legend=false)
 	Plots.contour!(grid, grid, z₂, levels=3, color="red", label="🐑", legend=true)
 	# contour!(grid, grid, g)
 	plot!(xs, ys, color="black", label="Discriminant")
 	scatter!([s_x], [s_y], label="Sample")
+	annotate!(μ₁[1], μ₁[2], text("🐮"))
+	annotate!(μ₂[1], μ₂[2], text("🐑"))
+	scatter!(dA[1,:], dA[2,:], color="blue", alpha=0.5, legend=false)
+	scatter!(dB[1,:], dB[2,:], color="red", alpha=0.5, legend=false)
 end
 
 # ╔═╡ 86acff24-c5cb-42f4-a1af-8da80d64f2b6
 md"""
-Sample classified as $(log_proba > 0 ? "🐮" : "🐑"). Log Prob: $(log_proba)
+Sample classified as $(log_proba > 0 ? "🐮" : "🐑"). Log Prob: $(log_proba).
+
+🐮 classification error: $(@sprintf("%.3f", 1-mean(classify_A)))
+
+🐑 classification error: $(@sprintf("%.3f", 1-mean(classify_B)))
+
+Total Classification Error: $(@sprintf("%.3f", 1-mean(vcat(classify_A, classify_B))))
 """
 
 # ╔═╡ 7ff8bc65-0864-4453-97de-6c88eefac295
@@ -221,8 +232,8 @@ Some material on this website is based on "Computational Thinking, a live online
 # ╟─71b718ff-b9a3-432f-b0ce-dc9e40ff60dd
 # ╟─f13f63ec-b509-11eb-0ea5-45a1ac8c9d4e
 # ╟─4e8ecde0-f0a5-4eff-a858-a14b86b73dd5
-# ╟─f45de1a7-b144-4ca5-9819-3a7455a1340c
-# ╟─d93ac03a-278d-4f70-a39c-6291e230073e
 # ╟─7d8105ac-862e-48d8-9b1a-bd80387ac6e3
 # ╟─86acff24-c5cb-42f4-a1af-8da80d64f2b6
+# ╟─d93ac03a-278d-4f70-a39c-6291e230073e
+# ╟─f45de1a7-b144-4ca5-9819-3a7455a1340c
 # ╟─7ff8bc65-0864-4453-97de-6c88eefac295
